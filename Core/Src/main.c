@@ -23,30 +23,18 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
-#include "sk6812.h"
+#include "ws2812b.h"
+#include "walking.h"
+
+#include <memory.h>
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint8_t  array[][3] = {
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{1, 1, 1},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{1, 1, 1},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{255, 255, 255},{0, 0, 0},{1, 1, 1},{0, 0, 0},{1, 1, 1},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{255, 255, 255},{255, 255, 255},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{1, 1, 1},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{1, 1, 1},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{1, 1, 1},{0, 0, 0},
-		{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},
-		{0, 0, 0},{1, 1, 1},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{255, 255, 255},{255, 255, 255},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0},{0, 0, 0}
-};
+
+/* USER CODE END PTD */
+
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 /* USER CODE END PD */
@@ -112,8 +100,10 @@ int main(void)
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
-  uint8_t angle = 0;
-  const uint8_t angle_difference = 6;
+  uint8_t odd = 1;
+  uint8_t index = 0;
+  uint8_t counter = 0;
+  uint8_t number_of_animation = 0;
 
   /* USER CODE END 2 */
 
@@ -124,18 +114,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	// Demo code for 8 LEDs
-	for(uint8_t i = 0; i < 6; i++) {
-		// Calculate color
-		uint32_t rgb_color = hsl_to_rgb(angle + (i * angle_difference), 255, 20);
-		// Set color
-		led_set_RGB(i, (rgb_color >> 16) & 0xFF, (rgb_color >> 8) & 0xFF, rgb_color & 0xFF);
+
+	for(uint16_t i = 0; i < 256; i++) {
+		if(i % 16 == 0)
+		{
+			odd ^= 1;
+			counter++;
+		}
+		if (odd){
+			index = (counter * 16 - 1) - (i % 16);
+		}
+		else{
+			index = i;
+		}
+
+		led_set_RGB(i,
+					walk_array[number_of_animation][index][0],
+                    walk_array[number_of_animation][index][1], 
+                    walk_array[number_of_animation][index][2]);
 	}
-	// Write to LED
-	++angle;
+	if(++number_of_animation == sizeof(walk_array)/sizeof(walk_array[0]))
+		number_of_animation = 0;
+    
 	led_render();
-	// Some delay
-	HAL_Delay(20);
+	HAL_Delay(500);
   }
   /* USER CODE END 3 */
 }
@@ -162,9 +164,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 96;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
-  RCC_OscInitStruct.PLL.PLLQ = 4;
+  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = 3;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
@@ -176,9 +178,9 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -207,7 +209,7 @@ static void MX_TIM1_Init(void)
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 60-1;
+  htim1.Init.Period = 104;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -353,4 +355,3 @@ void assert_failed(uint8_t *file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
