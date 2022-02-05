@@ -167,23 +167,26 @@ int main(void)
 //					walk_array[number_of_animation][index][0],
 //					walk_array[number_of_animation][index][1],
 //					walk_array[number_of_animation][index][2]);
-//		led_set_RGB(&Layer3, i,
-//					walk_array[number_of_animation][index][0],
-//					walk_array[number_of_animation][index][1],
-//					walk_array[number_of_animation][index][2]);
-//		led_set_RGB(&Layer4, i,
-//					walk_array[number_of_animation][index][0],
-//					walk_array[number_of_animation][index][1],
-//					walk_array[number_of_animation][index][2]);
+		led_set_RGB(&Layer3, i,
+					walk_array[number_of_animation][index][0],
+					walk_array[number_of_animation][index][1],
+					walk_array[number_of_animation][index][2]);
+		led_set_RGB(&Layer4, i,
+					walk_array[number_of_animation][index][0],
+					walk_array[number_of_animation][index][1],
+					walk_array[number_of_animation][index][2]);
 
 	}
 	if(++number_of_animation == sizeof(walk_array)/sizeof(walk_array[0]))
 		number_of_animation = 0;
     
 	led_render(&Layer1);
+	HAL_Delay(10);
 //	led_render(&Layer2);
-//	led_render(&Layer3);
-//	led_render(&Layer4);
+//	HAL_Delay(10);
+	led_render(&Layer3);
+	HAL_Delay(10);
+	led_render(&Layer4);
 	HAL_Delay(500);
   }
   /* USER CODE END 3 */

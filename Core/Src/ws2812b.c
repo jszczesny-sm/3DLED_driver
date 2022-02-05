@@ -3,6 +3,8 @@
 
 #include "ws2812b.h"
 
+
+
 static inline uint8_t scale8(uint8_t x, uint8_t scale) {
   return ((uint16_t)x * scale) >> 8;
 }
