@@ -46,7 +46,13 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim3;
+TIM_HandleTypeDef htim4;
+TIM_HandleTypeDef htim5;
 DMA_HandleTypeDef hdma_tim1_ch1;
+DMA_HandleTypeDef hdma_tim3_ch2;
+DMA_HandleTypeDef hdma_tim4_ch1;
+DMA_HandleTypeDef hdma_tim5_ch4_trig;
 
 /* USER CODE BEGIN PV */
 
@@ -57,6 +63,9 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_TIM1_Init(void);
+static void MX_TIM4_Init(void);
+static void MX_TIM3_Init(void);
+static void MX_TIM5_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -65,6 +74,11 @@ static void MX_TIM1_Init(void);
 /* USER CODE BEGIN 0 */
 
 uint32_t hsl_to_rgb(uint8_t h, uint8_t s, uint8_t l);
+
+Layers Layer1;
+Layers Layer2;
+Layers Layer3;
+Layers Layer4;
 
 /* USER CODE END 0 */
 
@@ -75,7 +89,21 @@ uint32_t hsl_to_rgb(uint8_t h, uint8_t s, uint8_t l);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+	Layer1.timer = &htim1;
+	Layer1.dma = &hdma_tim1_ch1;
+	Layer1.channel = TIM_CHANNEL_1;
 
+	Layer2.timer = &htim5;
+	Layer2.dma = &hdma_tim5_ch4_trig;
+	Layer2.channel = TIM_CHANNEL_4;
+
+	Layer3.timer = &htim3;
+	Layer3.dma = &hdma_tim3_ch2;
+	Layer3.channel = TIM_CHANNEL_2;
+
+	Layer4.timer = &htim4;
+	Layer4.dma = &hdma_tim4_ch1;
+	Layer4.channel = TIM_CHANNEL_1;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -98,6 +126,9 @@ int main(void)
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_TIM1_Init();
+  MX_TIM4_Init();
+  MX_TIM3_Init();
+  MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
 
   uint8_t odd = 1;
@@ -128,15 +159,31 @@ int main(void)
 			index = i;
 		}
 
-		led_set_RGB(i,
+		led_set_RGB(&Layer1, i,
 					walk_array[number_of_animation][index][0],
-                    walk_array[number_of_animation][index][1], 
+                    walk_array[number_of_animation][index][1],
                     walk_array[number_of_animation][index][2]);
+//		led_set_RGB(&Layer2, i,
+//					walk_array[number_of_animation][index][0],
+//					walk_array[number_of_animation][index][1],
+//					walk_array[number_of_animation][index][2]);
+//		led_set_RGB(&Layer3, i,
+//					walk_array[number_of_animation][index][0],
+//					walk_array[number_of_animation][index][1],
+//					walk_array[number_of_animation][index][2]);
+//		led_set_RGB(&Layer4, i,
+//					walk_array[number_of_animation][index][0],
+//					walk_array[number_of_animation][index][1],
+//					walk_array[number_of_animation][index][2]);
+
 	}
 	if(++number_of_animation == sizeof(walk_array)/sizeof(walk_array[0]))
 		number_of_animation = 0;
     
-	led_render();
+	led_render(&Layer1);
+//	led_render(&Layer2);
+//	led_render(&Layer3);
+//	led_render(&Layer4);
 	HAL_Delay(500);
   }
   /* USER CODE END 3 */
@@ -262,6 +309,183 @@ static void MX_TIM1_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 0;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 104;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+  HAL_TIM_MspPostInit(&htim3);
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 104;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
+  * @brief TIM5 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM5_Init(void)
+{
+
+  /* USER CODE BEGIN TIM5_Init 0 */
+
+  /* USER CODE END TIM5_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM5_Init 1 */
+
+  /* USER CODE END TIM5_Init 1 */
+  htim5.Instance = TIM5;
+  htim5.Init.Prescaler = 0;
+  htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim5.Init.Period = 104;
+  htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim5, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim5) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim5, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim5, &sConfigOC, TIM_CHANNEL_4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM5_Init 2 */
+
+  /* USER CODE END TIM5_Init 2 */
+  HAL_TIM_MspPostInit(&htim5);
+
+}
+
+/**
   * Enable DMA controller clock
   */
 static void MX_DMA_Init(void)
@@ -269,8 +493,18 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA2_Stream1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -287,6 +521,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
 }
 
@@ -320,6 +555,78 @@ uint32_t hsl_to_rgb(uint8_t h, uint8_t s, uint8_t l) {
 
 	return (((uint32_t)r + m) << 16) | (((uint32_t)g + m) << 8) | ((uint32_t)b + m);
 }
+
+void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
+
+	Layers *layer;
+
+	if(htim == &htim1){
+		layer = &Layer1;
+	} else if(htim == &htim5){
+		layer = &Layer2;
+	}else if(htim == &htim3){
+		layer = &Layer3;
+	}else if(htim == &htim4){
+		layer = &Layer4;
+	}else
+		return;
+
+	// DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
+	if(layer->wr_buf_p < NUM_PIXELS) {
+	// We're in. Fill the even buffer
+	for(uint_fast8_t i = 0; i < 8; ++i) {
+		layer->wr_buf[i     ] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p    ] << i) & 0x80) > 0);
+		layer->wr_buf[i +  8] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p + 1] << i) & 0x80) > 0);
+		layer->wr_buf[i + 16] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p + 2] << i) & 0x80) > 0);
+	}
+	layer->wr_buf_p++;
+	} else if (layer->wr_buf_p < NUM_PIXELS + 2) {
+		// Last two transfers are resets.
+		//                               WS2812B: 48 * 1.25 us = 60 us == good enough reset
+		// First half reset zero fill
+		for(uint8_t i = 0; i < WR_BUF_LEN / 2; ++i) layer->wr_buf[i] = 0;
+		layer->wr_buf_p++;
+	}
+}
+
+void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
+
+	Layers *layer;
+
+	if(htim == &htim1){
+		layer = &Layer1;
+	}else if(htim == &htim5){
+		layer = &Layer2;
+	}else if(htim == &htim3){
+		layer = &Layer3;
+	}else if(htim == &htim4){
+		layer = &Layer4;
+	}else
+		return;
+
+	// DMA buffer set from LED(wr_buf_p) to LED(wr_buf_p + 1)
+	if(layer->wr_buf_p < NUM_PIXELS) {
+		// We're in. Fill the odd buffer
+		for(uint_fast8_t i = 0; i < 8; ++i) {
+			layer->wr_buf[i + 24] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p    ] << i) & 0x80) > 0);
+			layer->wr_buf[i + 32] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p + 1] << i) & 0x80) > 0);
+			layer->wr_buf[i + 40] = PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p + 2] << i) & 0x80) > 0);
+	}
+
+	layer->wr_buf_p++;
+
+	} else if (layer->wr_buf_p < NUM_PIXELS + 2) {
+		// Second half reset zero fill
+		for(uint8_t i = WR_BUF_LEN / 2; i < WR_BUF_LEN; ++i) layer->wr_buf[i] = 0;
+		++layer->wr_buf_p;
+	} else {
+		// We're done. Lean back and until next time!
+		layer->wr_buf_p = 0;
+		HAL_TIM_PWM_Stop_DMA(layer->timer, layer->channel);
+	}
+}
+
+
 
 /* USER CODE END 4 */
 
