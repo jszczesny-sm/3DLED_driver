@@ -9,7 +9,16 @@ int main(void)
     if((file = fopen("./walking_anim/0.txt", "r")) == NULL){
         printf("Error! opening file\n");
     }
-    // int num = 0;
+
+    // Working read data from file
+    // int array[1][256][3] = {0};
+    // int i = 0;
+    // for (i = 0; i < 256; i++){
+    //     fscanf(file, "%d,", &array[0][i][0]);
+    //     fscanf(file, "%d,", &array[0][i][1]);
+    //     fscanf(file, "%d,", &array[0][i][2]);
+    // }
+
     // while(!feof(file)){
     //     num++;
     //     fgetc(file);
@@ -18,18 +27,30 @@ int main(void)
     // // char* tmp = strrchr(argv[1], '\\')
 
     // printf("n = %d\n", num);
-    // char string[num];
-
-    // fgets(string, num, file);
-    // printf("Value of n = %s", string);
-
-    int array[1][256][3] = {0};
+    uint8_t array[1][256][3] = {0};
+    char string[4];
+    int num = 0;
     int i = 0;
-    for (i = 0; i < 256; i++){
-        fscanf(file, "%d,", &array[0][i][0]);
-        fscanf(file, "%d,", &array[0][i][1]);
-        fscanf(file, "%d,", &array[0][i][2]);
+    int j = 0;
+    while(!feof(file) && i < 256){
+        num = 1;
+        while(',' != fgetc(file)) num++;
+        fseek(file, -num, SEEK_CUR);
+        // fread(string, 1, num, file);
+        fgets(string, num, file);
+         if( ferror( file ) != 0 )
+             printf( "Blad zapisu danych do pliku.\n" );
+        fseek(file, 1, SEEK_CUR);
+        array[0][i][j++] = atoi(string);
+        if(j>2){
+            j = 0;
+            i++;
+        }
+        printf("Value of n = %s\n", string);
     }
+
+
+    
 
     // uint8_t array[1][256][3] = {0};
     // int i = 0;

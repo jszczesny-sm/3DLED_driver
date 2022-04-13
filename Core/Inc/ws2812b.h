@@ -16,9 +16,6 @@
 // LED write buffer
 #define WR_BUF_LEN (NUM_BPP * 8 * 2)
 
-
-
-
 typedef struct Layers_struct
 {
 	TIM_HandleTypeDef *timer;

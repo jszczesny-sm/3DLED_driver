@@ -60,8 +60,29 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define BUTTON_UP_Pin GPIO_PIN_1
+#define BUTTON_UP_GPIO_Port GPIOC
+#define BUTTON_UP_EXTI_IRQn EXTI1_IRQn
+#define BUTTON_MID_Pin GPIO_PIN_2
+#define BUTTON_MID_GPIO_Port GPIOC
+#define BUTTON_MID_EXTI_IRQn EXTI2_IRQn
+#define BUTTON_DOWN_Pin GPIO_PIN_3
+#define BUTTON_DOWN_GPIO_Port GPIOC
+#define BUTTON_DOWN_EXTI_IRQn EXTI3_IRQn
+#define LCD_BL_Pin GPIO_PIN_1
+#define LCD_BL_GPIO_Port GPIOA
+#define LCD_RST_Pin GPIO_PIN_10
+#define LCD_RST_GPIO_Port GPIOB
 #define SD_CS_Pin GPIO_PIN_9
 #define SD_CS_GPIO_Port GPIOA
+#define LCD_CE_Pin GPIO_PIN_10
+#define LCD_CE_GPIO_Port GPIOA
+#define LCD_CLK_Pin GPIO_PIN_3
+#define LCD_CLK_GPIO_Port GPIOB
+#define LCD_DC_Pin GPIO_PIN_4
+#define LCD_DC_GPIO_Port GPIOB
+#define LCD_DIN_Pin GPIO_PIN_5
+#define LCD_DIN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 #define SD_SPI_HANDLE hspi1
 /* USER CODE END Private defines */
