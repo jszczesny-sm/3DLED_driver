@@ -37,11 +37,8 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-enum BUTTONS{
-    BUTTON_NULL,
-    BUTTON_UP,
-    BUTTON_MID,
-    BUTTON_DOWN
+enum BUTTONS {
+    BUTTON_NULL, BUTTON_UP, BUTTON_MID, BUTTON_DOWN
 };
 
 /* USER CODE END PTD */
@@ -60,10 +57,14 @@ SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim5;
 DMA_HandleTypeDef hdma_tim1_ch1;
+DMA_HandleTypeDef hdma_tim2_ch1;
+DMA_HandleTypeDef hdma_tim3_ch1_trig;
+DMA_HandleTypeDef hdma_tim4_ch1;
 DMA_HandleTypeDef hdma_tim5_ch1;
 
 UART_HandleTypeDef huart2;
@@ -83,6 +84,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_TIM4_Init(void);
+static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 uint32_t hsl_to_rgb(uint8_t h, uint8_t s, uint8_t l);
 void handleMenu(void);
@@ -92,15 +94,13 @@ void handleMenu(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
-
 volatile uint8_t button_event = 0;
 char buffor_dirs[10][16] = { 0 };
 uint8_t size_dirs = 0;
 uint8_t selected = 0;
-uint8_t walk_array[32][256][3] = { 0 };
 uint8_t playState = 0;
 
+Layers Layer0;
 Layers Layer1;
 Layers Layer2;
 Layers Layer3;
@@ -116,23 +116,32 @@ int main(void) {
     /* USER CODE BEGIN 1 */
 
     // Layers configuration
+    Layer0.timer = &htim1;
+    Layer0.dma = &hdma_tim1_ch1;
+    Layer0.channel = TIM_CHANNEL_1;
 
-
-    Layer1.timer = &htim1;
-    Layer1.dma = &hdma_tim1_ch1;
+    Layer1.timer = &htim2;
+    Layer1.dma = &hdma_tim2_ch1;
     Layer1.channel = TIM_CHANNEL_1;
 
-    Layer2.timer = &htim5;
-    Layer2.dma = &hdma_tim5_ch1;
-    Layer2.channel = TIM_CHANNEL_4;
+    Layer2.timer = &htim3;
+    Layer2.dma = &hdma_tim3_ch1_trig;
+    Layer2.channel = TIM_CHANNEL_1;
 
-//	Layer3.timer = &htim3;
-//	Layer3.dma = &hdma_tim3_ch2;
-//	Layer3.channel = TIM_CHANNEL_2;
-//
-//	Layer4.timer = &htim4;
-//	Layer4.dma = &hdma_tim4_ch1;
-//	Layer4.channel = TIM_CHANNEL_1;
+    Layer3.timer = &htim4;
+    Layer3.dma = &hdma_tim4_ch1;
+    Layer3.channel = TIM_CHANNEL_1;
+
+    Layer4.timer = &htim5;
+    Layer4.dma = &hdma_tim5_ch1;
+    Layer4.channel = TIM_CHANNEL_1;
+
+    Layers *layers_array[5];
+    layers_array[0] = &Layer0;
+    layers_array[1] = &Layer1;
+    layers_array[2] = &Layer2;
+    layers_array[3] = &Layer3;
+    layers_array[4] = &Layer4;
 
     /* USER CODE END 1 */
 
@@ -163,20 +172,23 @@ int main(void) {
     MX_SPI3_Init();
     MX_TIM3_Init();
     MX_TIM4_Init();
+    MX_TIM2_Init();
     /* USER CODE BEGIN 2 */
+
     // GPIO configuration
     HAL_NVIC_EnableIRQ(EXTI1_IRQn);
     HAL_NVIC_EnableIRQ(EXTI2_IRQn);
     HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
     // LCD initialization
-    PCD8544_Init(0x30);
+    PCD8544_Init(0x24);
     PCD8544_GotoXY(8, 21);
     PCD8544_Puts("3D_LED_CUBE", PCD8544_Pixel_Set, PCD8544_FontSize_5x7);
     PCD8544_Refresh();
     HAL_Delay(2000);
 
     // SD Card initialization
+    uint8_t walk_array[32][256][3] = { 0 };
     ret_status result = STATUS_NULL;
     result = sd_card_init();
     if (STATUS_OK != result) {
@@ -184,7 +196,8 @@ int main(void) {
 //        lcd_draw_text(0, 0,
 //                "Error!!! problem with mount SD card. Try re-attach card and press RESET button",0);
 //        lcd_copy();
-        while (1);
+        while (1)
+            ;
     }
 
     char path[256];
@@ -198,19 +211,21 @@ int main(void) {
 //                "Error!!!      problem with scan file in SD card        Press RESET button",0);
 //        lcd_copy();
         sd_card_close();
-        while (1);
+        while (1)
+            ;
     }
 
-    while(1){
+    while (1) {
         HAL_Delay(500);
         handleMenu();
         if (playState)
             break;
     }
 
-
     myprintf("Starting read data\n");
-    result = sd_card_read_data((uint8_t*) walk_array);
+    struct layers_struct layers_config[5];
+    result = sd_card_read_data("0:/WALKIN~1", (uint8_t*) walk_array,
+            (struct layers_struct*) layers_config);
 
     sd_card_close();
 
@@ -219,13 +234,12 @@ int main(void) {
 //        lcd_draw_text(0, 0,
 //                "Error!!!      problem with read data from SD card        Press RESET button",0);
 //        lcd_copy();
-        while (1);
+        while (1)
+            ;
     }
     PCD8544_GotoXY(20, 38);
     PCD8544_Puts("Playing...", PCD8544_Pixel_Set, PCD8544_FontSize_5x7);
     PCD8544_Refresh();
-
-
 
 //    for (size_t j = 0; j < 10; j++){
 //        myprintf("\nIMAGE_%d:\n", j);
@@ -246,41 +260,33 @@ int main(void) {
 
         /* USER CODE BEGIN 3 */
 
-        for (uint16_t i = 0; i < 256; i++) {
-            if (i % 16 == 0) {
-                odd ^= 1;
-                counter++;
-            }
-            if (odd) {
-                index = (counter * 16 - 1) - (i % 16);
-            } else {
-                index = i;
-            }
 
-            led_set_RGB(&Layer1, i, walk_array[number_of_animation][index][0],
-                    walk_array[number_of_animation][index][1],
-                    walk_array[number_of_animation][index][2]);
-            led_set_RGB(&Layer2, i, walk_array[number_of_animation][index][0],
-                    walk_array[number_of_animation][index][1],
-                    walk_array[number_of_animation][index][2]);
-//			led_set_RGB(&Layer3, i, walk_array[number_of_animation][index][0],
-//					walk_array[number_of_animation][index][1],
-//					walk_array[number_of_animation][index][2]);
-//			led_set_RGB(&Layer4, i, walk_array[number_of_animation][index][0],
-//					walk_array[number_of_animation][index][1],
-//					walk_array[number_of_animation][index][2]);
-
+            for (uint16_t layer_index = 0; layer_index < 5; layer_index++) {
+                for (uint8_t x = 0; x < layers_config[layer_index].count; x++) {
+                    if (layers_config[layer_index].values[x] == number_of_animation) {
+                        for (uint16_t i = 0; i < 256; i++) {
+                            if (i % 16 == 0) {
+                                odd ^= 1;
+                                counter++;
+                            }
+                            if (odd) {
+                                index = (counter * 16 - 1) - (i % 16);
+                            } else {
+                                index = i;
+                            }
+                            led_set_RGB(layers_array[layer_index], i,
+                                walk_array[number_of_animation][index][0],
+                                walk_array[number_of_animation][index][1],
+                                walk_array[number_of_animation][index][2]);
+                    }
+                }
+            }
+            led_render(&layers_array[layer_index]);
+            HAL_Delay(10);
         }
-        if (++number_of_animation == sizeof(walk_array) / sizeof(walk_array[0]))
+        if (++number_of_animation == 10)
             number_of_animation = 0;
 
-        led_render(&Layer1);
-        HAL_Delay(10);
-        led_render(&Layer2);
-        HAL_Delay(10);
-//		led_render(&Layer3);
-//		HAL_Delay(10);
-//		led_render(&Layer4);
         HAL_Delay(500);
     }
     /* USER CODE END 3 */
@@ -473,6 +479,61 @@ static void MX_TIM1_Init(void) {
 }
 
 /**
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
+static void MX_TIM2_Init(void) {
+
+    /* USER CODE BEGIN TIM2_Init 0 */
+
+    /* USER CODE END TIM2_Init 0 */
+
+    TIM_ClockConfigTypeDef sClockSourceConfig = { 0 };
+    TIM_MasterConfigTypeDef sMasterConfig = { 0 };
+    TIM_OC_InitTypeDef sConfigOC = { 0 };
+
+    /* USER CODE BEGIN TIM2_Init 1 */
+
+    /* USER CODE END TIM2_Init 1 */
+    htim2.Instance = TIM2;
+    htim2.Init.Prescaler = 0;
+    htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim2.Init.Period = 4294967295;
+    htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+    if (HAL_TIM_Base_Init(&htim2) != HAL_OK) {
+        Error_Handler();
+    }
+    sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+    if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK) {
+        Error_Handler();
+    }
+    if (HAL_TIM_PWM_Init(&htim2) != HAL_OK) {
+        Error_Handler();
+    }
+    sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+    sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig)
+            != HAL_OK) {
+        Error_Handler();
+    }
+    sConfigOC.OCMode = TIM_OCMODE_PWM1;
+    sConfigOC.Pulse = 0;
+    sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+    sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+    if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_1)
+            != HAL_OK) {
+        Error_Handler();
+    }
+    /* USER CODE BEGIN TIM2_Init 2 */
+
+    /* USER CODE END TIM2_Init 2 */
+    HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
  * @brief TIM3 Initialization Function
  * @param None
  * @retval None
@@ -516,7 +577,7 @@ static void MX_TIM3_Init(void) {
     sConfigOC.Pulse = 0;
     sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
     sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-    if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_2)
+    if (HAL_TIM_PWM_ConfigChannel(&htim3, &sConfigOC, TIM_CHANNEL_1)
             != HAL_OK) {
         Error_Handler();
     }
@@ -678,9 +739,18 @@ static void MX_DMA_Init(void) {
     __HAL_RCC_DMA1_CLK_ENABLE();
 
     /* DMA interrupt init */
+    /* DMA1_Stream0_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
     /* DMA1_Stream2_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA1_Stream2_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
+    /* DMA1_Stream4_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Stream4_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream4_IRQn);
+    /* DMA1_Stream5_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
     /* DMA2_Stream1_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
@@ -756,36 +826,38 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 }
 
-void handleMenu(void)
-{
-    switch(button_event){
+void handleMenu(void) {
+    switch (button_event) {
     case BUTTON_NULL:
         break;
     case BUTTON_DOWN:
-        if((selected + 1) < size_dirs)
+        if ((selected + 1) < size_dirs)
             selected++;
         break;
     case BUTTON_MID:
         playState ^= 1;
         break;
     case BUTTON_UP:
-        if(0 < selected)
+        if (0 < selected)
             selected--;
         break;
-    default: break;
+    default:
+        break;
     }
 
     PCD8544_Clear();
 
-    for(int i = 0; i < size_dirs; i++){
-        if(i == selected){
-            PCD8544_DrawFilledRectangle(0, i*9, 84, i*9 + 9, PCD8544_Pixel_Set);
-            PCD8544_GotoXY(4, i*9 + 1);
-            PCD8544_Puts(buffor_dirs[i], PCD8544_Pixel_Clear, PCD8544_FontSize_5x7);
-        }
-        else{
-            PCD8544_GotoXY(4, i*9 + 1);
-            PCD8544_Puts(buffor_dirs[i], PCD8544_Pixel_Clear, PCD8544_FontSize_5x7);
+    for (int i = 0; i < size_dirs; i++) {
+        if (i == selected) {
+            PCD8544_DrawFilledRectangle(0, i * 9, 84, i * 9 + 9,
+                    PCD8544_Pixel_Set);
+            PCD8544_GotoXY(4, i * 9 + 1);
+            PCD8544_Puts(buffor_dirs[i], PCD8544_Pixel_Clear,
+                    PCD8544_FontSize_5x7);
+        } else {
+            PCD8544_GotoXY(4, i * 9 + 1);
+            PCD8544_Puts(buffor_dirs[i], PCD8544_Pixel_Clear,
+                    PCD8544_FontSize_5x7);
         }
     }
     PCD8544_Refresh();
@@ -855,13 +927,15 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
     Layers *layer;
 
     if (htim == &htim1) {
+        layer = &Layer0;
+    } else if (htim == &htim2) {
         layer = &Layer1;
-    } else if (htim == &htim5) {
+    } else if (htim == &htim3) {
         layer = &Layer2;
-//	} else if (htim == &htim3) {
-//		layer = &Layer3;
-//	} else if (htim == &htim4) {
-//		layer = &Layer4;
+    } else if (htim == &htim4) {
+        layer = &Layer3;
+    } else if (htim == &htim5) {
+        layer = &Layer4;
     } else
         return;
 
@@ -894,13 +968,15 @@ void HAL_TIM_PWM_PulseFinishedCallback(TIM_HandleTypeDef *htim) {
     Layers *layer;
 
     if (htim == &htim1) {
+        layer = &Layer0;
+    } else if (htim == &htim2) {
         layer = &Layer1;
-    } else if (htim == &htim5) {
+    } else if (htim == &htim3) {
         layer = &Layer2;
-//	} else if (htim == &htim3) {
-//		layer = &Layer3;
-//	} else if (htim == &htim4) {
-//		layer = &Layer4;
+    } else if (htim == &htim4) {
+        layer = &Layer3;
+    } else if (htim == &htim5) {
+        layer = &Layer4;
     } else
         return;
 

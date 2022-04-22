@@ -152,12 +152,80 @@ ret_status sd_card_close(void) {
     return STATUS_ERROR;
 }
 
-ret_status sd_card_read_data(uint8_t *data) {
+ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *layers) {
+
+
+    FIL file;
+    UINT br;
+    char name[20] = { 0 };
+
+    // #### READING CONGFIGURATION
+    sprintf((char*)name, "%s//%s", (char*)path, "CONFIG~1.txt");
+    myprintf("start reading file: %s\r\n", name);
+    fres = f_open(&file, name, FA_READ);
+    if (fres != FR_OK) {
+        myprintf("f_open error (%i)\r\n", fres);
+        return STATUS_ERROR;
+    }
+
+    UINT num = 0;
+
+    uint8_t isComment = 0;
+    char ch;
+    TCHAR buffer[32] = {0};
+    while(!f_eof(&file)){
+        fres = f_read(&file, &ch, 1, &br);
+        if (fres != FR_OK) {
+            myprintf("f_read error (%i)\r\n", fres);
+            return STATUS_ERROR;
+        }
+
+        if('\n' == ch){
+            isComment = 0;
+            printf("end of line\n");
+        }
+        if(isComment) continue;
+        if('#' == ch){
+            isComment = 1;
+            continue;
+        }
+
+        if('L' == ch){
+            uint8_t length = 0;
+            char c = 0;
+            while(';' != c){
+                length++;
+                fres = f_read(&file, &c, 1, &br);
+                if (fres != FR_OK) {
+                    myprintf("f_read error (%i)\r\n", fres);
+                    return STATUS_ERROR;
+                }
+            }
+            f_lseek(&file, f_tell(&file)-length);
+            fres = f_read(&file, &buffer, length, &br);
+            if (fres != FR_OK) {
+                myprintf("f_read error (%i)\r\n", fres);
+                return STATUS_ERROR;
+            }
+            int i = 7;
+            int count = 0;
+            while(length > i){
+                layers[num].values[count] = atoi(&buffer[i]);
+                i+=2;
+                count++;
+            }
+            layers[num].count = count;
+            num++;
+        }
+
+    }
+    f_close(&file);
+
+    // #### READING FILES
+//    myprintf("Reading files with animation\r\n");
     for (uint8_t image = 0; image < 10; image++) {
-        FIL file;
         char name[20] = { 0 };
-		sprintf((char*)name, "0://WALKIN~1//%d.txt", image);
-		myprintf("Try to read image %s\r\n", name);
+        sprintf((char*)name, "%s//%d.txt", (char*)path, image);
 
 		fres = f_open(&file, name, FA_READ);
 		if (fres != FR_OK) {
@@ -166,7 +234,6 @@ ret_status sd_card_read_data(uint8_t *data) {
 		}
 
         UINT num = 0;
-        UINT br;
         int i = 0;
         int j = 0;
         while(i < 256){
@@ -174,10 +241,18 @@ ret_status sd_card_read_data(uint8_t *data) {
             TCHAR c[2] = {0};
             TCHAR string[4] = {0};
 
-            f_read(&file, c, 1, &br);
+            fres = f_read(&file, c, 1, &br);
+            if (fres != FR_OK) {
+                myprintf("f_read error (%i)\r\n", fres);
+                return STATUS_ERROR;
+            }
             while(',' != c[0]){
                 num++;
-                f_read(&file, c, 1, &br);
+                fres = f_read(&file, c, 1, &br);
+                if (fres != FR_OK) {
+                    myprintf("f_read error (%i)\r\n", fres);
+                    return STATUS_ERROR;
+                }
             }
             f_lseek(&file, f_tell(&file)-num);
             fres = f_read(&file, string, num-1, &br);

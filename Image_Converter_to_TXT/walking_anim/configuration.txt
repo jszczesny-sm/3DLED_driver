@@ -1,7 +1,13 @@
-/* ##### Configuration file #####
-*  it's tell which animantion should be plaied on apprortite layer
-*
-*	Example:
-	LAYER_0: 9,8;
-	LAYER_1: 7,6;		
-*/
+# ##### Configuration file #####
+#  tells which animation should be played on the corresponding layer from 5
+#	
+#	Example:
+#	LAYER_0: 9,8;
+#	LAYER_1: 7,6;		
+#
+
+LAYER_0=9,8;
+LAYER_1=7,6;
+LAYER_2=4,5;
+LAYER_3=3,2;
+LAYER_4=1,0;
