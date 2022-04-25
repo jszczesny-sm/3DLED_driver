@@ -6,6 +6,7 @@
 #	LAYER_1: 7,6;		
 #
 
+NUMBER_OF_IMAGES=10;
 LAYER_0=9,8;
 LAYER_1=7,6;
 LAYER_2=4,5;

@@ -110,7 +110,7 @@ ret_status sd_card_init(void) {
     return STATUS_OK;
 }
 
-ret_status sd_card_scan_file(char *path, char* buffor_dirs, uint8_t* size_dirs) {
+ret_status sd_card_scan_file(char *path, char* buffor_dirs, uint8_t* number_of_dirs) {
 
     FRESULT res;
     DIR dir;
@@ -126,8 +126,8 @@ ret_status sd_card_scan_file(char *path, char* buffor_dirs, uint8_t* size_dirs) 
                     && !(fno.fattrib & AM_SYS)) { /* It is a directory */
                 i = strlen(path);
                 sprintf(&path[i], "/%s", fno.fname);
-                sprintf((char*)(buffor_dirs + (*size_dirs)*16), "%s", path);
-                (*size_dirs)++;
+                sprintf((char*)(buffor_dirs + (*number_of_dirs)*16), "%s", path);
+                (*number_of_dirs)++;
                 res = sd_card_scan_file(path, NULL, NULL); /* Enter the directory */
                 if (res != FR_OK)
                     break;
@@ -152,7 +152,7 @@ ret_status sd_card_close(void) {
     return STATUS_ERROR;
 }
 
-ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *layers) {
+ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *layers, uint8_t *number_of_images) {
 
 
     FIL file;
@@ -172,7 +172,7 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
 
     uint8_t isComment = 0;
     char ch;
-    TCHAR buffer[32] = {0};
+    TCHAR buffor[32] = {0};
     while(!f_eof(&file)){
         fres = f_read(&file, &ch, 1, &br);
         if (fres != FR_OK) {
@@ -182,7 +182,7 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
 
         if('\n' == ch){
             isComment = 0;
-            printf("end of line\n");
+            continue;
         }
         if(isComment) continue;
         if('#' == ch){
@@ -190,6 +190,41 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
             continue;
         }
 
+        // Check number of images in animation
+        if('N' == ch){
+            uint8_t length_of_line = 0;
+            uint8_t position_of_char = 0;
+            char c = 0;
+            while(';' != c){
+                length_of_line++;
+
+                if('=' == c) position_of_char = length_of_line;
+
+                fres = f_read(&file, &c, 1, &br);
+                if (fres != FR_OK) {
+                    myprintf("f_read error (%i)\r\n", fres);
+                    return STATUS_ERROR;
+                }
+            }
+            f_lseek(&file, f_tell(&file)-length_of_line);
+            fres = f_read(&file, &buffor, length_of_line, &br);
+            if (fres != FR_OK) {
+                myprintf("f_read error (%i)\r\n", fres);
+                return STATUS_ERROR;
+            }
+            char buffor_number_of_image[3] = {0};
+            buffor_number_of_image[2] = '\0';
+            if('=' != buffor[15]){
+                myprintf("Wrong format of NUMBER_OF_IMAGES in configuration.txt");
+                return STATUS_ERROR;
+            }
+            strncpy(buffor_number_of_image, &buffor[16], length_of_line-position_of_char);
+            *number_of_images = (uint8_t)atoi(buffor_number_of_image);
+            continue;
+        }
+
+
+        // Check what image should show on the property layer
         if('L' == ch){
             uint8_t length = 0;
             char c = 0;
@@ -202,7 +237,7 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
                 }
             }
             f_lseek(&file, f_tell(&file)-length);
-            fres = f_read(&file, &buffer, length, &br);
+            fres = f_read(&file, &buffor, length, &br);
             if (fres != FR_OK) {
                 myprintf("f_read error (%i)\r\n", fres);
                 return STATUS_ERROR;
@@ -210,7 +245,7 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
             int i = 7;
             int count = 0;
             while(length > i){
-                layers[num].values[count] = atoi(&buffer[i]);
+                layers[num].values[count] = atoi(&buffor[i]);
                 i+=2;
                 count++;
             }

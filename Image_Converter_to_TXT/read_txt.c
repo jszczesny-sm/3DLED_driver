@@ -24,11 +24,12 @@ int main(void)
     //     fscanf(file, "%d,", &array[0][i][1]);
     //     fscanf(file, "%d,", &array[0][i][2]);
     // }
-    int num = 0;
+    // int num = 0;
     unsigned int isComment = 0;
     char ch;
-    char buffer[11];
-    struct layers_struct layers[5];
+    char buffor[255];
+    // struct layers_struct layers[5];
+    int number_of_animation;
     while(!feof(file)){
         ch = fgetc(file);
         
@@ -41,39 +42,64 @@ int main(void)
             isComment = 1;
             continue;
         }
-        
-        if('L' == ch){   
-            int file_index = ftell(file);
+           if('N' == ch){   
+            // int file_index = ftell(file);
             int length = 0;
-            while(';' != fgetc(file)) length++;
-            fseek(file, file_index, SEEK_SET);         
-            fread(&buffer, 1, length, file);
-            printf("length=%d\n", length);
-            int i = 7;
-            int count = 0;
-            while(length > i){
-                layers[num].values[count] = atoi(&buffer[i]);
-                printf("value[i=%d length=%d] = %d\n", i, length, layers[num].values[count]);
-                i+=2;
-                count++;
-            } 
-            layers[num].count = count;
-            num++;
+            int pos_of_char = 0;
+            char c = 0;
+            while(';' != c){
+                length++;
+                if('=' == c) pos_of_char = length;
+                c = fgetc(file);
+            }
+            fseek(file, -length, SEEK_CUR);         
+            fread(&buffor, 1, length, file);
+           
+            char buffor_number_of_image[16];
+            if('=' != buffor[15]){
+                printf("Wrong format of NUMBER_OF_IMAGES in configuration.txt 16:%s", &buffor[15]);
+                return -1;
+            }
+            printf("len-pos=%d\n", length-pos_of_char);
+            strncpy(buffor_number_of_image, &buffor[16], length-pos_of_char);
+            printf("buffor_num=%s", buffor_number_of_image);
+            number_of_animation = atoi(buffor_number_of_image);
         }
-
     }
 
-    printf("end of file\n");num++;
+        printf("%d\n", number_of_animation);
+    //     if('L' == ch){   
+    //         int file_index = ftell(file);
+    //         int length = 0;
+    //         while(';' != fgetc(file)) length++;
+    //         fseek(file, file_index, SEEK_SET);         
+    //         fread(&buffer, 1, length, file);
+    //         printf("length=%d\n", length);
+    //         int i = 7;
+    //         int count = 0;
+    //         while(length > i){
+    //             layers[num].values[count] = atoi(&buffer[i]);
+    //             printf("value[i=%d length=%d] = %d\n", i, length, layers[num].values[count]);
+    //             i+=2;
+    //             count++;
+    //         } 
+    //         layers[num].count = count;
+    //         num++;
+    //     }
 
-    for (size_t i = 0; i < 5; i++)
-    {
-        printf("LAYER_%d:\n", i);
-        for (size_t j = 0; j < layers[i].count; j++)
-        {
-            printf("%d\n", layers[i].values[j]);
-        }
+    // }
+
+    // printf("end of file\n");num++;
+
+    // for (size_t i = 0; i < 5; i++)
+    // {
+    //     printf("LAYER_%d:\n", i);
+    //     for (size_t j = 0; j < layers[i].count; j++)
+    //     {
+    //         printf("%d\n", layers[i].values[j]);
+    //     }
         
-    }
+    // }
     
 
 
