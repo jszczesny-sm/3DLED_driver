@@ -1,0 +1,14 @@
+# ##### Configuration file #####
+#  tells which animation should be played on the corresponding layer from 5
+#	
+#	Example:
+#	LAYER_0: 9,8;
+#	LAYER_1: 7,6;		
+#
+
+NUMBER_OF_IMAGES=4;
+LAYER_0=3;
+LAYER_1=3;
+LAYER_2=2;
+LAYER_3=1;
+LAYER_4=0;
