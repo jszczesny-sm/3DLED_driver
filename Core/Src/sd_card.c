@@ -61,51 +61,6 @@ ret_status sd_card_init(void) {
     myprintf(
             "SD card stats:\r\n%10lu KiB total drive space.\r\n%10lu KiB available.\r\n",
             total_sectors / 2, free_sectors / 2);
-//	BYTE readBuf[30];
-
-//	// f_gets <--------------
-//	//Now let's try to open file "test.txt"
-//	fres = f_open(&fil, "test.txt", FA_READ);
-//	if (fres != FR_OK) {
-//		myprintf("f_open error (%i)\r\n", fres);
-//		return NOT_OK;
-//	}
-//	myprintf("I was able to open 'test.txt' for reading!\r\n");
-//
-//	//Read 30 bytes from "test.txt" on the SD card
-//
-//
-//	//We can either use f_read OR f_gets to get data out of files
-//	//f_gets is a wrapper on f_read that does some string formatting for us
-//	TCHAR *rres = f_gets((TCHAR*) readBuf, 30, &fil);
-//	if (rres != 0) {
-//		myprintf("Read string from 'test.txt' contents: %s\r\n", readBuf);
-//	} else {
-//		myprintf("f_gets error (%i)\r\n", fres);
-//	}
-//
-//	//Be a tidy kiwi - don't forget to close your file!
-//	f_close(&fil);
-
-    //Now let's try and write a file "write.txt"
-//	fres = f_open(&fil, "write.txt",
-//			FA_WRITE | FA_OPEN_ALWAYS | FA_CREATE_ALWAYS);
-//	if (fres == FR_OK) {
-//		myprintf("I was able to open 'write.txt' for writing\r\n");
-//	} else {
-//		myprintf("f_open error (%i)\r\n", fres);
-//	}
-//
-//	//Copy in a string
-//	strncpy((char*) readBuf, "a new file is made!", 19);
-//	UINT bytesWrote;
-//	fres = f_write(&fil, readBuf, 19, &bytesWrote);
-//	if (fres == FR_OK) {
-//		myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
-//	} else {
-//		myprintf("f_write error (%i)\r\n", fres);
-//	}
-//
 
     return STATUS_OK;
 }
@@ -129,8 +84,8 @@ ret_status sd_card_scan_file(char *path, char* buffor_dirs, uint8_t* number_of_d
                 sprintf((char*)(buffor_dirs + (*number_of_dirs)*16), "%s", path);
                 (*number_of_dirs)++;
                 res = sd_card_scan_file(path, NULL, NULL); /* Enter the directory */
-                if (res != FR_OK)
-                    break;
+                if (res != STATUS_OK)
+                    myprintf("Error!!! Scanning dir error: %d\n", res);
                 path[i] = 0;
             } else { /* It is a file. */
                 myprintf("%s/%s\r\n", path, fno.fname);
@@ -138,11 +93,13 @@ ret_status sd_card_scan_file(char *path, char* buffor_dirs, uint8_t* number_of_d
         }
         f_closedir(&dir);
     }
-    else {
+
+    if (res != FR_OK){
         myprintf("Error!!! Scanning dir error: %d\n", res);
         return STATUS_ERROR;
     }
-    return STATUS_OK;
+    else
+        return STATUS_OK;
 }
 
 ret_status sd_card_close(void) {
@@ -258,7 +215,7 @@ ret_status sd_card_read_data(char *path, uint8_t *data, struct layers_struct *la
 
     // #### READING FILES
 //    myprintf("Reading files with animation\r\n");
-    for (uint8_t image = 0; image < 10; image++) {
+    for (uint8_t image = 0; image < *number_of_images; image++) {
         char name[20] = { 0 };
         sprintf((char*)name, "%s//%d.txt", (char*)path, image);
 
