@@ -2,72 +2,88 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <math.h>
 
-struct layers_struct
-{
-    int count;
-    int values[32];
-};
+// struct layers_struct
+// {
+//     int count;
+//     int values[32];
+// };
 
 int main(void)
 {
     FILE *file;
-    if((file = fopen("./walking_anim/configuration.txt", "r")) == NULL){
+    if((file = fopen("./walking_anim/0.txt", "r")) == NULL){
         printf("Error! opening file\n");
     }
 
     // WORKING
-    // int array[1][256][3] = {0};
-    // int i = 0;
-    // for (i = 0; i < 256; i++){
-    //     fscanf(file, "%d,", &array[0][i][0]);
-    //     fscanf(file, "%d,", &array[0][i][1]);
-    //     fscanf(file, "%d,", &array[0][i][2]);
-    // }
-    // int num = 0;
-    unsigned int isComment = 0;
-    char ch;
-    char buffor[255];
-    // struct layers_struct layers[5];
-    int number_of_animation;
-    while(!feof(file)){
-        ch = fgetc(file);
-        
-        if('\n' == ch){
-            isComment = 0;
-            printf("end of line\n");
-        }
-        if(isComment) continue;
-        if('#' == ch){
-            isComment = 1;
-            continue;
-        }
-           if('N' == ch){   
-            // int file_index = ftell(file);
-            int length = 0;
-            int pos_of_char = 0;
-            char c = 0;
-            while(';' != c){
-                length++;
-                if('=' == c) pos_of_char = length;
-                c = fgetc(file);
-            }
-            fseek(file, -length, SEEK_CUR);         
-            fread(&buffor, 1, length, file);
-           
-            char buffor_number_of_image[16];
-            if('=' != buffor[15]){
-                printf("Wrong format of NUMBER_OF_IMAGES in configuration.txt 16:%s", &buffor[15]);
-                return -1;
-            }
-            printf("len-pos=%d\n", length-pos_of_char);
-            strncpy(buffor_number_of_image, &buffor[16], length-pos_of_char);
-            printf("buffor_num=%s", buffor_number_of_image);
-            number_of_animation = atoi(buffor_number_of_image);
-        }
+    int array[2][256][3] = {0};
+    int i = 0;
+    for (i = 0; i < 256; i++){
+        fscanf(file, "%d,", &array[0][i][0]);
+        fscanf(file, "%d,", &array[0][i][1]);
+        fscanf(file, "%d,", &array[0][i][2]);
+    }
+    fclose(file);
+
+    if((file = fopen("./walking_anim/1.txt", "r")) == NULL){
+        printf("Error! opening file\n");
     }
 
-        printf("%d\n", number_of_animation);
+    // WORKING
+    for (i = 0; i < 256; i++){
+        fscanf(file, "%d,", &array[1][i][0]);
+        fscanf(file, "%d,", &array[1][i][1]);
+        fscanf(file, "%d,", &array[1][i][2]);
+    }
+    fclose(file);
+
+
+    // int num = 0;
+    // unsigned int isComment = 0;
+    // char ch;
+    // char buffor[255];
+    // // struct layers_struct layers[5];
+    // int number_of_animation;
+    // while(!feof(file)){
+    //     ch = fgetc(file);
+        
+    //     if('\n' == ch){
+    //         isComment = 0;
+    //         printf("end of line\n");
+    //     }
+    //     if(isComment) continue;
+    //     if('#' == ch){
+    //         isComment = 1;
+    //         continue;
+    //     }
+    //        if('N' == ch){   
+    //         // int file_index = ftell(file);
+    //         int length = 0;
+    //         int pos_of_char = 0;
+    //         char c = 0;
+    //         while(';' != c){
+    //             length++;
+    //             if('=' == c) pos_of_char = length;
+    //             c = fgetc(file);
+    //         }
+    //         fseek(file, -length, SEEK_CUR);         
+    //         fread(&buffor, 1, length, file);
+           
+    //         char buffor_number_of_image[16];
+    //         if('=' != buffor[15]){
+    //             printf("Wrong format of NUMBER_OF_IMAGES in configuration.txt 16:%s", &buffor[15]);
+    //             return -1;
+    //         }
+    //         printf("len-pos=%d\n", length-pos_of_char);
+    //         strncpy(buffor_number_of_image, &buffor[16], length-pos_of_char);
+    //         printf("buffor_num=%s", buffor_number_of_image);
+    //         number_of_animation = atoi(buffor_number_of_image);
+    //     }
+    // }
+
+    //     printf("%d\n", number_of_animation);
     //     if('L' == ch){   
     //         int file_index = ftell(file);
     //         int length = 0;
@@ -153,7 +169,7 @@ int main(void)
     //         i++;  
     //     }   
     // }
-    fclose(file);
+    
 
 
     // printf("Read data:\n");
@@ -163,8 +179,35 @@ int main(void)
     //     if(x != 0 && (x+1)%16==0)
     //         printf("\n");
     // }
-    
+    printf("Read data:\n");
+    // for (size_t x = 0; x < 256; x++)
+    // {
+    //     if( 200 < array[0][x][0]) printf("%c", (char)219);
+    //     else printf("%c", (char)250);
+    //     if(x != 0 && (x+1)%16==0)
+    //         printf("\n");
+    // }
 
-    getchar();
+    uint8_t odd = 1U;
+    uint8_t index = 0;
+    uint8_t counter = 0U;
+    // #define abs(x) (x<0)?(x*(-1)):(x)
+    for (uint16_t i = 0U; i < 256; i++) {
+        if ( (i % 16U) == 0U ) {
+            odd ^= 1U;
+            counter++;
+        }
+        if (!odd) {
+            index = 16*(16-i%16) - counter;
+        } else {
+            index = 256-(16*(16-((i+1)%16))+counter);
+        }
+        if( 200 < array[1][index][0]) /*printf("%c", (char)219);*/printf("%d ", index);
+        else /*printf("%c", (char)250);*/printf("%d ", index);
+        if(i != 0 && (i+1)%16==0)
+            printf("\n");
+    }
+
+    // getchar();
     return 0;
 }

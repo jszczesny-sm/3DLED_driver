@@ -2,10 +2,12 @@
 #  tells which animation should be played on the corresponding layer from 5
 #	
 #	Example:
+#	SPEED=450; #in microsekunds
 #	LAYER_0: 9,8;
 #	LAYER_1: 7,6;		
 #
 
+SPEED=400;
 NUMBER_OF_IMAGES=4;
 LAYER_0=3;
 LAYER_1=3;

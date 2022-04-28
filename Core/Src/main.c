@@ -182,6 +182,7 @@ int main(void) {
     uint8_t walk_array[32][256][3] = { 0 };
     ret_status result = STATUS_NULL;
     uint8_t number_of_images = 0;
+    uint8_t speed_of_animation = 0;
 
     result = sd_card_init();
     if (STATUS_OK != result) {
@@ -213,12 +214,13 @@ int main(void) {
         if (playState)
             break;
     }
+    HAL_NVIC_DisableIRQ(EXTI1_IRQn);
+    HAL_NVIC_DisableIRQ(EXTI2_IRQn);
+    HAL_NVIC_DisableIRQ(EXTI3_IRQn);
 
     myprintf("Starting read data\n");
     struct layers_struct layers_config[5];
-    result = sd_card_read_data((char*) buffor_dirs[selected],
-            (uint8_t*) walk_array, (struct layers_struct*) layers_config,
-            &number_of_images);
+    result = sd_card_read_data((char*) buffor_dirs[selected],(uint8_t*) walk_array, layers_config, &number_of_images, &speed_of_animation);
 
     sd_card_close();
 
@@ -235,10 +237,10 @@ int main(void) {
     PCD8544_Refresh();
 
 
-    uint8_t odd = 1;
-    uint8_t index = 0;
-    uint8_t counter = 0;
-    uint8_t number_of_animation = 0;
+    uint8_t odd = 1U;
+    uint8_t index = 0U;
+    uint8_t counter = 1U;
+    uint8_t number_of_animation = 0U;
 
     /* USER CODE END 2 */
 
@@ -248,20 +250,30 @@ int main(void) {
         /* USER CODE END WHILE */
 
         /* USER CODE BEGIN 3 */
-        for (uint16_t layer_index = 0; layer_index < 5; layer_index++) {
-            for (uint8_t x = 0; x < layers_config[layer_index].count; x++) {
-                if (layers_config[layer_index].values[x]
-                        == number_of_animation) {
+        for (uint8_t layer_index = 0U; layer_index < 5U; layer_index++) {
+            for (uint8_t x = 0U; x < layers_config[layer_index].count; x++) {
+                if (layers_config[layer_index].values[x] == number_of_animation)
+                {
                     layers_config[layer_index].isSet = 1;
-                    for (uint16_t i = 0; i < 256; i++) {
-                        if (i % 16 == 0) {
-                            odd ^= 1;
+                    counter = 0U;
+                    for (uint16_t i = 0U; i < NUM_PIXELS; i++) {
+//                        if ( (i % 16U) == 0U ) {
+//                            odd ^= 1U;
+//                            counter++;
+//                        }
+//                        if (!odd) {
+//                            index = (counter * 16 - 1) - (i % 16);
+//                        } else {
+//                            index = i;
+//                        }
+                        if ( (i % 16U) == 0U ) {
+                            odd ^= 1U;
                             counter++;
                         }
-                        if (odd) {
-                            index = (counter * 16 - 1) - (i % 16);
+                        if (!odd) {
+                            index = 16*(16-(i%16)) - counter;
                         } else {
-                            index = i;
+                            index = 256-(16*(16-((i+1)%16))+counter);
                         }
                         led_set_RGB(layers_array[layer_index], i,
                                 walk_array[number_of_animation][index][0],
@@ -279,7 +291,7 @@ int main(void) {
         if (++number_of_animation == number_of_images)
             number_of_animation = 0;
 
-        HAL_Delay(500);
+        HAL_Delay(speed_of_animation);
     }
     /* USER CODE END 3 */
 }
@@ -784,12 +796,8 @@ void HAL_TIM_PWM_PulseFinishedHalfCpltCallback(TIM_HandleTypeDef *htim) {
         for (uint_fast8_t i = 0; i < 8; ++i) {
             layer->wr_buf[i] =
             PWM_LO << (((layer->rgb_arr[3 * layer->wr_buf_p] << i) & 0x80) > 0);
-            layer->wr_buf[i + 8] = PWM_LO
-                    << (((layer->rgb_arr[3 * layer->wr_buf_p + 1] << i) & 0x80)
-                            > 0);
-            layer->wr_buf[i + 16] = PWM_LO
-                    << (((layer->rgb_arr[3 * layer->wr_buf_p + 2] << i) & 0x80)
-                            > 0);
+            layer->wr_buf[i + 8] = PWM_LO<< (((layer->rgb_arr[3 * layer->wr_buf_p + 1] << i) & 0x80)> 0);
+            layer->wr_buf[i + 16] = PWM_LO<< (((layer->rgb_arr[3 * layer->wr_buf_p + 2] << i) & 0x80)> 0);
         }
         layer->wr_buf_p++;
     } else if (layer->wr_buf_p < NUM_PIXELS + 2) {

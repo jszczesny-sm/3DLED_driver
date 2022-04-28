@@ -7,14 +7,14 @@
 #define PWM_LO (33)
 
 // LED parameters
-#define NUM_BPP (3) // WS2812B
-#define NUM_PIXELS (256)
+#define NUM_BPP (3U) // WS2812B
+#define NUM_PIXELS (256U)
 #define NUM_BYTES (NUM_BPP * NUM_PIXELS)
 
 
 
 // LED write buffer
-#define WR_BUF_LEN (NUM_BPP * 8 * 2)
+#define WR_BUF_LEN (NUM_BPP * 8U * 2U)
 
 typedef struct Layers_struct
 {
